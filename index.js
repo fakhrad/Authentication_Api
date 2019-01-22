@@ -1,5 +1,5 @@
-import Login from "./hocs/Login";
+import withLogin from "./hocs/Login";
 
 export {
-    Login
+     withLogin
 }
