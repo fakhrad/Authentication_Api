@@ -24,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/saeedPadyab/Authentication_Api/issues"
   },
-  "homepage": "https://github.com/saeedPadyab/Authentication_Api#readme"
+  "homepage": "https://github.com/saeedPadyab/Authentication_Api#readme",
+  "dependencies": {
+    "react-native-config": "^0.11.7"
+  }
 }
