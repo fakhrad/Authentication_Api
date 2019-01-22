@@ -1,0 +1,28 @@
+{
+  "name": "app-sdk-authentication-api",
+  "version": "1.0.0",
+  "description": "this icludes authentication api's",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saeedPadyab/Authentication_Api.git"
+  },
+  "keywords": [
+    "authentication",
+    "login",
+    "signup",
+    "verify",
+    "code",
+    "fingerprint",
+    "twoStepVerfication"
+  ],
+  "author": "saeed padyab",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/saeedPadyab/Authentication_Api/issues"
+  },
+  "homepage": "https://github.com/saeedPadyab/Authentication_Api#readme"
+}
