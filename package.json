@@ -1,10 +1,13 @@
 {
-  "name": "app-sdk-authentication-api",
-  "version": "1.0.3",
+  "name": "@app-sdk/authentication-api",
+  "version": "1.0.4",
   "description": "this icludes authentication api's",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
@@ -26,6 +29,7 @@
   },
   "homepage": "https://github.com/saeedPadyab/Authentication_Api#readme",
   "dependencies": {
+    "@app-sdk/services": "^1.0.7",
     "react-native-config": "^0.11.7"
   }
 }
