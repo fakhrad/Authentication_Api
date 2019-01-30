@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/saeedPadyab/Authentication_Api#readme",
   "dependencies": {
-    "@app-sdk/services": "^1.0.7",
+    "@app-sdk/services": "^1.0.9",
     "react-native-config": "^0.11.7"
   }
 }
