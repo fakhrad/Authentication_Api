@@ -1,6 +1,6 @@
 {
   "name": "@app-sdk/authentication-api",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "this icludes authentication api's",
   "main": "index.js",
   "scripts": {

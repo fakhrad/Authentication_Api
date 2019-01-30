@@ -1,9 +1,7 @@
 import { Alert } from "react-native";
 import { authApis } from "./config";
-import { languageManager } from "@app-sdk/services";
 
-
-const logIn = async phoneNumber => {
+const logIn = async ({ phoneNumber }) => {
     try {
         const url = authApis.BASE_URL + authApis.LOGIN_URL;
         var rawResponse = await fetch(url, {
@@ -12,30 +10,16 @@ const logIn = async phoneNumber => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                phoneNumber: numb
+                phoneNumber: phoneNumber
             })
         });
-        const status = rawResponse.status;
-        if (status == 200 || status == 201) {
-            // exisiting user . created
-            return rawResponse;
-        } else if (status == 500) {
-            // internal skserver error
-            const error = translate.t("LOGIN_ERROR_500");
-            alertError(error);
-            return undefined;
-        } else if (status == 400) {
-            //  phone number is required
-            const error = translate.t("LOGIN_ERROR_400");
-            alertError(error);
-            return undefined;
-        }
+        return rawResponse;
     } catch (error) {
         alertError(error.message);
         return undefined;
     }
 };
-const signUp = async phoneNumber => {
+const signUp = async ({ phoneNumber }) => {
     try {
         const url = authApis.BASE_URL + authApis.SIGNUP_URL;
         var rawResponse = await fetch(url, {
@@ -47,24 +31,12 @@ const signUp = async phoneNumber => {
                 phoneNumber: phoneNumber
             })
         });
-        const status = rawResponse.status;
-        if (status == 200 || status == 201) {
-            // exisiting user . created
-            return rawResponse;
-        } else if (status == 500) {
-            // internal server error
-            const error = translate.t("SIGNUP_ERROR_500");
-            alertError(error);
-            return undefined;
-        } else if (status == 400) {
-            //  phone number is required
-            const error = translate.t("LOGIN_ERROR_400");
-            alertError(error);
-            return undefined;
-        }
+        return rawResponse;
     } catch (error) {
-        console.log(error.message);
+        alertError(error.message);
+        return undefined;
     }
+
 };
 
 // const getCities = async () => {
@@ -207,6 +179,6 @@ const signUp = async phoneNumber => {
 // };
 
 alertError = error => {
-  Alert.alert(error);
+    Alert.alert(error);
 };
-export { logIn, verifyCode, signUp, changeCity, getCities, getShopperInfo };
+export { logIn, signUp };
