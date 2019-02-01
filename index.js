@@ -1,3 +1,4 @@
+import { authManager } from "@app-sdk/services";
 import { Alert } from "react-native";
 import { authApis } from "./config";
 
@@ -36,9 +37,28 @@ const signUp = async ({ phoneNumber }) => {
         alertError(error.message);
         return undefined;
     }
-
 };
-
+const verifyCode = async ({ phoneNumber, code }) => {
+    try {
+        const url = authApis.BASE_URL + authApis.VERIFY_CODE;
+        var rawResponse = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                phoneNumber: phoneNumber,
+                code: code
+            })
+        });
+        if (rawResponse.status == 200) {
+            authManager.instance.currentUser = JSON.parse(rawResponse._bodyText);
+        }
+        return rawResponse;
+    } catch (error) {
+        console.log(error.message);
+    }
+};
 // const getCities = async () => {
 //   var cities = await appStorage.getItem("cities");
 //   if (cities != undefined && cities != null && cities.length > 0) {
@@ -103,39 +123,6 @@ const signUp = async ({ phoneNumber }) => {
 //     alertError(error.message);
 //   }
 // };
-// const verifyCode = async (phoneNumber, code) => {
-//   try {
-//     const url = authApis.BASE_URL + authApis.VERIFY_CODE;
-//     var rawResponse = await fetch(url, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json"
-//       },
-//       body: JSON.stringify({
-//         phoneNumber: phoneNumber,
-//         code: code
-//       })
-//     });
-//     const status = rawResponse.status;
-//     if (status == 200) {
-//       return rawResponse;
-//     } else if (status == 500) {
-//       // server error
-//       const error = translate.t("VERIFY_CODE_ERROR_500");
-//       alertError(error);
-//     } else if (status == 400) {
-//       // invalid code = bad request
-//       const error = translate.t("VERIFY_CODE_ERROR_400");
-//       alertError(error);
-//     } else if (status == 404) {
-//       // invalid phone number- not found
-//       const error = translate.t("VERIFY_CODE_ERROR_404");
-//       alertError(error);
-//     }
-//   } catch (error) {
-//     console.log(error.message);
-//   }
-// };
 
 // const changeCity = async cityCode => {
 //   try {
@@ -181,4 +168,4 @@ const signUp = async ({ phoneNumber }) => {
 alertError = error => {
     Alert.alert(error);
 };
-export { logIn, signUp };
+export { logIn, signUp, verifyCode };
