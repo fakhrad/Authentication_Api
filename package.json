@@ -1,6 +1,6 @@
 {
   "name": "@app-sdk/authentication-api",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "this icludes authentication api's",
   "main": "index.js",
   "scripts": {
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/saeedPadyab/Authentication_Api#readme",
   "dependencies": {
-    "@app-sdk/services": "^1.0.9",
+    "@app-sdk/services": "^1.0.10",
     "react-native-config": "^0.11.7"
   }
 }
