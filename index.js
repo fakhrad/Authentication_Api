@@ -1,6 +1,20 @@
-import { authManager, storageManager, navManager } from "@app-sdk/services";
-import { Alert } from "react-native";
+import { authManager, storageManager } from "@app-sdk/services";
+import { Alert, NetInfo } from "react-native";
 import { authApis } from "./config";
+
+callWithInternetcheck = (callback, onError) => {
+  NetInfo.getConnectionInfo().then(connectionInfo => {
+    if (connectionInfo.type == "none") {
+      if (onError) {
+        onError();
+      }
+    } else {
+      if (callback) {
+        callback();
+      }
+    }
+  });
+};
 
 const logIn = () => {
   let _onOkCallBack;
@@ -27,59 +41,71 @@ const logIn = () => {
       _onServerErrorCallBack(result);
     }
   };
-  _call = async ({ phoneNumber }) => {
-    try {
-      const url = authApis.BASE_URL + authApis.LOGIN_URL;
-      var rawResponse = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          phoneNumber: phoneNumber
-        })
-      });
-
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 201:
-          _onCreated(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = ({ phoneNumber }) => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.LOGIN_URL;
+        var rawResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            phoneNumber: phoneNumber
+          })
+        });
+
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 201:
+            _onCreated(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onCreated: function(callback) {
+    onCreated: function (callback) {
       _onCreatedCallBack = callback;
       return this;
     },
-    onBadRequest: function(callback) {
+    onBadRequest: function (callback) {
       _onBadRequestCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -104,52 +130,63 @@ const signUp = () => {
       _onServerErrorCallBack(result);
     }
   };
-
-  _call = async ({ phoneNumber }) => {
-    try {
-      const url = authApis.BASE_URL + authApis.SIGNUP_URL;
-      var rawResponse = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          phoneNumber: phoneNumber
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 201:
-          _onCreated(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = ({ phoneNumber }) => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.SIGNUP_URL;
+        var rawResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            phoneNumber: phoneNumber
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 201:
+            _onCreated(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onCreated: function(callback) {
+    onCreated: function (callback) {
       _onCreatedCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -180,60 +217,72 @@ const verifyCode = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async ({ phoneNumber, code }) => {
-    try {
-      const url = authApis.BASE_URL + authApis.VERIFY_CODE;
-      var rawResponse = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          phoneNumber: phoneNumber,
-          code: code
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          storageManager.setItem("userInfo", result);
-          authManager.instance.currentUser = result;
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 404:
-          _notFound(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.log(error.message);
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = ({ phoneNumber, code }) => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.VERIFY_CODE;
+        var rawResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            phoneNumber: phoneNumber,
+            code: code
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            storageManager.setItem("userInfo", result);
+            authManager.instance.currentUser = result;
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 404:
+            _notFound(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onBadRequest: function(callback) {
+    onBadRequest: function (callback) {
       _onBadRequestCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -270,70 +319,81 @@ const changeCity = () => {
       _notFoundCallBack(result);
     }
   };
-
-  _call = async cityCode => {
-    try {
-      const url = authApis.BASE_URL + authApis.CHANGE_CITY;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "PUT",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id,
-          citycode: cityCode
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          authManager.instance.currentUser = result;
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          _notFound(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.log(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = cityCode => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.CHANGE_CITY;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "PUT",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id,
+            citycode: cityCode
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            authManager.instance.currentUser = result;
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            _notFound(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.log(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onBadRequest: function(callback) {
+    onBadRequest: function (callback) {
       _onBadRequestCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -352,36 +412,48 @@ const getCities = () => {
       _onServerErrorCallBack(result);
     }
   };
-  _call = async () => {
-    try {
-      const url = authApis.BASE_URL + authApis.GET_CITIES;
-      var rawResponse = await fetch(url);
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 500:
-          _onBadRequest(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      console.log(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = () => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.GET_CITIES;
+        var rawResponse = await fetch(url);
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 500:
+            _onBadRequest(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.log(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -418,68 +490,80 @@ const updateProfile = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async ({ first_name, last_name, address }) => {
-    try {
-      debugger;
-      const url = authApis.BASE_URL + authApis.UPDATE_PROFULE;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "PUT",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id,
-          first_name: first_name,
-          last_name: last_name,
-          address: address
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          authManager.instance.currentUser = result;
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          _onBadRequest(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = ({ first_name, last_name, address }) => {
+    callWithInternetcheck(async () => {
+      try {
+        debugger;
+        const url = authApis.BASE_URL + authApis.UPDATE_PROFULE;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "PUT",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id,
+            first_name: first_name,
+            last_name: last_name,
+            address: address
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            authManager.instance.currentUser = result;
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            _onBadRequest(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -515,65 +599,77 @@ const changeNotification = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async notify => {
-    try {
-      const url = authApis.BASE_URL + authApis.CHANGE_NOTIFICATION;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "PUT",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id,
-          notification: notify
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          authManager.instance.currentUser = result;
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          notFound(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = notify => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.CHANGE_NOTIFICATION;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "PUT",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id,
+            notification: notify
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            authManager.instance.currentUser = result;
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            notFound(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -609,79 +705,91 @@ const changeAvatar = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async avatar => {
-    try {
-      var xhr = new XMLHttpRequest();
-      const url = authApis.BASE_URL + authApis.CHANGE_AVATAR;
-      const { token, _id } = authManager.instance.currentUser;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
+    }
+  };
+  _call = avatar => {
+    callWithInternetcheck(async () => {
+      try {
+        var xhr = new XMLHttpRequest();
+        const url = authApis.BASE_URL + authApis.CHANGE_AVATAR;
+        const { token, _id } = authManager.instance.currentUser;
 
-      xhr.open("PUT", url);
-      xhr.onload = () => {
-        const status = xhr.status;
-        const result = JSON.parse(xhr._response);
-        switch (status) {
-          case 200:
-            authManager.instance.currentUser = result;
-            _onOk(result);
-            break;
-          case 400:
-            _onBadRequest(result);
-            break;
-          case 401:
-            _unAuthorized(result);
-            break;
-          case 404:
-            _onBadRequest(result);
-            break;
-          case 500:
-            _onServerError(result);
-            break;
-          default:
-            break;
-        }
-      };
-      var formdata = new FormData();
-      formdata.append("avatar", {
-        type: "image/jpeg",
-        name: "ss.jpeg",
-        uri: avatar.path
-      });
-      formdata.append("id", _id);
-
-      if (xhr.upload) {
-        xhr.upload.onprogress = event => {
-          console.log("upload onprogress", event);
-          if (event.lengthComputable) {
-            console.log({
-              uploadProgress: event.loaded / event.total
-            });
+        xhr.open("PUT", url);
+        xhr.onload = () => {
+          const status = xhr.status;
+          const result = JSON.parse(xhr._response);
+          switch (status) {
+            case 200:
+              authManager.instance.currentUser = result;
+              _onOk(result);
+              break;
+            case 400:
+              _onBadRequest(result);
+              break;
+            case 401:
+              _unAuthorized(result);
+              break;
+            case 404:
+              _onBadRequest(result);
+              break;
+            case 500:
+              _onServerError(result);
+              break;
+            default:
+              break;
           }
         };
+        var formdata = new FormData();
+        formdata.append("avatar", {
+          type: "image/jpeg",
+          name: "ss.jpeg",
+          uri: avatar.path
+        });
+        formdata.append("id", _id);
+
+        if (xhr.upload) {
+          xhr.upload.onprogress = event => {
+            console.log("upload onprogress", event);
+            if (event.lengthComputable) {
+              console.log({
+                uploadProgress: event.loaded / event.total
+              });
+            }
+          };
+        }
+        xhr.setRequestHeader("authorization", "Bearer " + token);
+        xhr.setRequestHeader("content-type", "multipart/form-data");
+        await xhr.send(formdata);
+      } catch (error) {
+        console.log(error.message);
       }
-      xhr.setRequestHeader("authorization", "Bearer " + token);
-      xhr.setRequestHeader("content-type", "multipart/form-data");
-      await xhr.send(formdata);
-    } catch (error) {
-      console.log(error.message);
-    }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -711,64 +819,75 @@ const deleteAccount = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async () => {
-    try {
-      debugger;
-      const url = authApis.BASE_URL + authApis.DELETE_ACCOUNT;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "DELETE",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          _onBadRequest(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = () => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.DELETE_ACCOUNT;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "DELETE",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            _onBadRequest(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -792,54 +911,66 @@ const requestCode = () => {
       _unAuthorizedCallBack(result);
     }
   };
-  _call = async ({ phoneNumber }) => {
-    try {
-      const url = authApis.BASE_URL + authApis.REQUEST_CODE;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "POST",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id,
-          phoneNumber: phoneNumber
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = async ({ phoneNumber }) => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.REQUEST_CODE;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id,
+            phoneNumber: phoneNumber
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -870,64 +1001,76 @@ const changeNumber = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async ({ code }) => {
-    try {
-      const url = authApis.BASE_URL + authApis.CHANGE_NUMBER;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "PUT",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id,
-          code: parseInt(code)
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          _onBadRequest(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = async ({ code }) => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.CHANGE_NUMBER;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "PUT",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id,
+            code: parseInt(code)
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            _onBadRequest(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -963,72 +1106,84 @@ const changeLocation = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async location => {
-    try {
-      const url = authApis.BASE_URL + authApis.LOCATION_CHANGED;
-      const { token, _id } = authManager.instance.currentUser;
-      var rawResponse = await fetch(url, {
-        method: "PUT",
-        headers: {
-          authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          id: _id,
-          location: {
-            lat: location.latitude,
-            long: location.longitude
-          }
-        })
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          authManager.instance.currentUser = result;
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          notFound(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = location => {
+    callWithInternetcheck(async () => {
+      try {
+        const url = authApis.BASE_URL + authApis.LOCATION_CHANGED;
+        const { token, _id } = authManager.instance.currentUser;
+        var rawResponse = await fetch(url, {
+          method: "PUT",
+          headers: {
+            authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: _id,
+            location: {
+              lat: location.latitude,
+              long: location.longitude
+            }
+          })
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            authManager.instance.currentUser = result;
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            notFound(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    onBadRequest: function(callback) {
+    onBadRequest: function (callback) {
       _onBadRequestCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
@@ -1066,67 +1221,79 @@ const getUserInfo = () => {
       _notFoundCallBack(result);
     }
   };
-  _call = async userInfo => {
-    try {
-      const url =
-        authApis.BASE_URL +
-        authApis.GET_USER_INFO +
-        "?phoneNumber=" +
-        userInfo.phoneNumber;
-      var rawResponse = await fetch(url, {
-        method: "GET",
-        headers: {
-          authorization: "Bearer " + userInfo.token,
-          "Content-Type": "application/json"
-        }
-      });
-      const status = rawResponse.status;
-      const result = await rawResponse.json();
-      switch (status) {
-        case 200:
-          _onOk(result);
-          break;
-        case 400:
-          _onBadRequest(result);
-          break;
-        case 401:
-          _unAuthorized(result);
-          break;
-        case 404:
-          notFound(result);
-          break;
-        case 500:
-          _onServerError(result);
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      alertError(error.message);
-      return undefined;
+  let _onConnectionErrorCallBack;
+  _onConnectionError = result => {
+    if (_onConnectionErrorCallBack) {
+      _onConnectionErrorCallBack(result);
     }
+  };
+  _call = userInfo => {
+    callWithInternetcheck(async () => {
+      try {
+        const url =
+          authApis.BASE_URL +
+          authApis.GET_USER_INFO +
+          "?phoneNumber=" +
+          userInfo.phoneNumber;
+        var rawResponse = await fetch(url, {
+          method: "GET",
+          headers: {
+            authorization: "Bearer " + userInfo.token,
+            "Content-Type": "application/json"
+          }
+        });
+        const status = rawResponse.status;
+        const result = await rawResponse.json();
+        switch (status) {
+          case 200:
+            _onOk(result);
+            break;
+          case 400:
+            _onBadRequest(result);
+            break;
+          case 401:
+            _unAuthorized(result);
+            break;
+          case 404:
+            notFound(result);
+            break;
+          case 500:
+            _onServerError(result);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        alertError(error.message);
+        return undefined;
+      }
+    }, _onConnectionError);
   };
 
   return {
     call: _call,
-    onOk: function(callback) {
+    onOk: function (callback) {
       _onOkCallBack = callback;
       return this;
     },
-    onServerError: function(callback) {
+    onServerError: function (callback) {
       _onServerErrorCallBack = callback;
       return this;
     },
-    onBadRequest: function(callback) {
+    onBadRequest: function (callback) {
       _onBadRequestCallBack = callback;
       return this;
     },
-    notFound: function(callback) {
+    notFound: function (callback) {
       _notFoundCallBack = callback;
       return this;
     },
-    unAuthorized: function(callback) {
+    unAuthorized: function (callback) {
       _unAuthorizedCallBack = callback;
+      return this;
+    },
+    onConnectionError: function (callback) {
+      _onConnectionErrorCallBack = callback;
       return this;
     }
   };
