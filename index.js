@@ -60,7 +60,6 @@ const logIn = () => {
             phoneNumber: phoneNumber
           })
         });
-
         const status = rawResponse.status;
         const result = await rawResponse.json();
         switch (status) {
@@ -123,7 +122,12 @@ const signUp = () => {
       _onCreatedCallBack(result);
     }
   };
-
+  let _onBadRequestCallBack;
+  _onBadRequest = result => {
+    if (_onBadRequestCallBack) {
+      _onBadRequestCallBack(result);
+    }
+  };
   let _onServerErrorCallBack;
   _onServerError = result => {
     if (_onServerErrorCallBack) {
@@ -158,6 +162,9 @@ const signUp = () => {
           case 201:
             _onCreated(result);
             break;
+          case 400:
+            _onBadRequest(result);
+            break;
           case 500:
             _onServerError(result);
             break;
@@ -183,6 +190,10 @@ const signUp = () => {
     },
     onServerError: function (callback) {
       _onServerErrorCallBack = callback;
+      return this;
+    },
+    onBadRequest: function (callback) {
+      _onBadRequestCallBack = callback;
       return this;
     },
     onConnectionError: function (callback) {
@@ -499,7 +510,6 @@ const updateProfile = () => {
   _call = ({ first_name, last_name, address }) => {
     callWithInternetcheck(async () => {
       try {
-        debugger;
         const url = authApis.BASE_URL + authApis.UPDATE_PROFULE;
         const { token, _id } = authManager.instance.currentUser;
         var rawResponse = await fetch(url, {
